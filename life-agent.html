@@ -473,14 +473,17 @@ if(dm.length){w.appendChild(h('div',{className:'label'},'Media'));dm.forEach(m=>
 }else{
 // List view
 allDays.forEach(dk=>{
-const d=S.days[dk],items=d?.items||[],dm=d?.media||[];
-const doneCount=items.filter(i=>i.done).length;const total=items.filter(i=>!i.skip).length;const pct=total?Math.round(doneCount/total*100):0;
-const row=h('div',{style:{display:'flex',alignItems:'center',gap:'14px',padding:'14px 0',borderBottom:'1px solid var(--bd)',cursor:'pointer'},onclick:()=>{S.arcDay=dk;R()}},
-h('div',{style:{width:'40px',textAlign:'center'}},h('div',{className:'mono',style:{fontSize:'18px',fontWeight:'700',color:pct>=70?'var(--gn)':pct>=40?'var(--ac)':'var(--tm)'}},pct+'%')),
-h('div',{style:{flex:'1'}},h('div',{style:{fontSize:'15px',fontWeight:'500'}},dD(dk)),h('div',{style:{fontSize:'12px',color:'var(--td)',marginTop:'2px'}},doneCount+'/'+total+' completed'+(dm.length?' · '+dm.length+' media':''))),
-h('span',{style:{color:'var(--td)',fontSize:'16px'}},'›')
-);
-w.appendChild(row);
+	if(!dk || typeof dk !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(dk)) return; // skip invalid keys
+	const d=S.days[dk],items=d?.items||[],dm=d?.media||[];
+	const doneCount=items.filter(i=>i.done).length;const total=items.filter(i=>!i.skip).length;const pct=total?Math.round(doneCount/total*100):0;
+	let dateLabel;
+	try { dateLabel = dD(dk); } catch { dateLabel = dk; }
+	const row=h('div',{style:{display:'flex',alignItems:'center',gap:'14px',padding:'14px 0',borderBottom:'1px solid var(--bd)',cursor:'pointer'},onclick:()=>{S.arcDay=dk;R()}},
+		h('div',{style:{width:'40px',textAlign:'center'}},h('div',{className:'mono',style:{fontSize:'18px',fontWeight:'700',color:pct>=70?'var(--gn)':pct>=40?'var(--ac)':'var(--tm)'}},pct+'%')),
+		h('div',{style:{flex:'1'}},h('div',{style:{fontSize:'15px',fontWeight:'500'}},dateLabel),h('div',{style:{fontSize:'12px',color:'var(--td)',marginTop:'2px'}},doneCount+'/'+total+' completed'+(dm.length?' · '+dm.length+' media':''))),
+		h('span',{style:{color:'var(--td)',fontSize:'16px'}},'›')
+	);
+	w.appendChild(row);
 });
 if(!allDays.length)w.appendChild(h('div',{style:{color:'var(--tm)',fontSize:'14px'}},'No days logged yet.'));
 }
