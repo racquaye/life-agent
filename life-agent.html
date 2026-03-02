@@ -290,13 +290,53 @@ if(av.length){const ac2=h('div',{className:'card',style:{margin:'0 16px',marginT
 				const list=(m.type==='watch'?S.cfg.media.watch:S.cfg.media.read);const ex=list.find(x=>x.t===m.t);if(ex){ex.pos=n||ex.pos;svC()}
 				svD();R()}},h('span',{style:{fontSize:'10px'}},m.type==='watch'?'📺':'📖'),h('span',{style:{flex:'1',fontSize:'13px',color:'var(--tm)'}},m.t),h('span',{className:'add-btn-sm'},'+add'))));w.appendChild(ac2)}
 // Suggestions
-const sugs=getSug(td);if(sugs.length){const actCt=items.filter(i=>!i.skip).length;const cap=(S.cfg.maxDaily||12)-actCt;w.appendChild(h('div',{style:{margin:'20px 20px 0'}},h('div',{className:'label',style:{margin:'0 0 4px'}},'Suggested Tasks'),h('div',{style:{fontSize:'11px',color:'var(--td)',marginBottom:'10px'}},'Capacity: '+cap+' more')));const sc=h('div',{className:'card',style:{margin:'0 16px'}});sugs.forEach(b=>sc.appendChild(h('div',{className:'sug-row',onclick:()=>{items.push({id:'bk-'+b.id,label:b.label,emoji:b.emoji,done:false,skip:false,src:'bk'});svD();R()}},h('span',null,b.emoji),h('span',{style:{flex:'1',fontSize:'13px'}},b.label),b.due?h('span',{className:'mono',style:{fontSize:'10px',color:b.due<=td?'var(--rd)':'var(--td)'}},dS(b.due)):null,h('span',{className:'add-btn-sm'},'+add'))));w.appendChild(sc)}
+const sugs=getSug(td);
+if(sugs.length){
+  const actCt=items.filter(i=>!i.skip).length;
+  const cap=(S.cfg.maxDaily||12)-actCt;
+  w.appendChild(h('div',{style:{margin:'20px 20px 0'}},h('div',{className:'label',style:{margin:'0 0 4px'}},'Suggested Tasks'),h('div',{style:{fontSize:'11px',color:'var(--td)',marginBottom:'10px'}},'Capacity: '+cap+' more')));
+  const sc=h('div',{className:'card',style:{margin:'0 16px'}});
+  sugs.forEach(b=>sc.appendChild(h('div',{
+    className:'sug-row',
+    onclick:()=>{
+      // Remove this backlog item from all other days before adding
+      const targetId = 'bk-'+b.id;
+      Object.keys(S.days).forEach(dayKey => {
+        S.days[dayKey].items = (S.days[dayKey].items||[]).filter(i => i.id !== targetId);
+      });
+      it.push({id:targetId,label:b.label,emoji:b.emoji,done:false,skip:false,src:'bk',backlogId:b.id});
+      svD();
+      R();
+    }
+  },b.emoji+' '+b.label)));
+  w.appendChild(sc);
+}
 w.appendChild(h('div',{style:{margin:'24px 20px 0'}},h('div',{className:'label',style:{margin:'0 0 10px'}},'March Focus'),h('div',{style:{display:'flex',flexWrap:'wrap',gap:'6px'}},...S.cfg.focus.map(f=>h('span',{className:'tag'},f)))));
 p.appendChild(w);
 }
 
 /* ─── UPCOMING ─── */
-function rUp(p){const w=h('div',{style:{padding:'20px'}});[1,2].forEach(off=>{const k=fk(off);ensDay(k);const it=S.days[k].items,ex=S.cfg.exercise[dow(k)];w.appendChild(h('div',{style:{display:'flex',justifyContent:'space-between',alignItems:'baseline',marginTop:off>1?'28px':'0'}},h('div',null,h('div',{style:{fontSize:'18px',fontWeight:'700'}},dn(k)),h('div',{className:'mono',style:{fontSize:'12px',color:'var(--td)',marginTop:'2px'}},dD(k))),h('span',{className:'mono',style:{fontSize:'14px',color:'var(--tm)'}},it.filter(i=>!i.skip).length+' items')));if(ex)w.appendChild(h('div',{style:{marginTop:'8px',padding:'8px 12px',background:'var(--sfh)',borderRadius:'8px',border:'1px solid var(--bd)',fontSize:'14px'}},ex.emoji+' '+ex.label));const card=h('div',{className:'card',style:{marginTop:'8px'}});it.forEach(item=>{if(item.skip)return;card.appendChild(h('div',{className:'row',style:{padding:'10px 14px'}},h('span',{style:{fontSize:'14px',flex:'1'}},item.emoji+' '+item.label),(item.src==='c'||item.src==='bk')?h('button',{className:'x-btn',onclick:()=>{S.days[k].items=it.filter(x=>x!==item);svD();R()}},'×'):null))});w.appendChild(card);w.appendChild(h('button',{className:'add-d',style:{marginTop:'4px'},onclick:()=>{const l=prompt('Add to '+dn(k)+':');if(!l)return;it.push({id:'c'+Date.now(),label:l,emoji:'📌',done:false,skip:false,src:'c'});svD();R()}},'+ Add to '+dn(k)));const ids=it.map(i=>i.id);const avail=S.cfg.backlog.filter(b=>!S.bkDone[b.id]&&!ids.includes('bk-'+b.id)).sort((a,b)=>({high:0,med:1,low:2}[a.pri]||1)-({high:0,med:1,low:2}[b.pri]||1)).slice(0,3);if(avail.length){w.appendChild(h('div',{style:{fontSize:'11px',color:'var(--td)',marginTop:'10px',marginBottom:'6px'}},'Quick-add:'));const bc=h('div',{style:{display:'flex',gap:'6px',flexWrap:'wrap'}});avail.forEach(b=>bc.appendChild(h('button',{className:'pill',onclick:()=>{it.push({id:'bk-'+b.id,label:b.label,emoji:b.emoji,done:false,skip:false,src:'bk'});svD();R()}},b.emoji+' '+b.label)));w.appendChild(bc)}});p.appendChild(w)}
+function rUp(p){const w=h('div',{style:{padding:'20px'}});[1,2].forEach(off=>{const k=fk(off);ensDay(k);const it=S.days[k].items,ex=S.cfg.exercise[dow(k)];w.appendChild(h('div',{style:{display:'flex',justifyContent:'space-between',alignItems:'baseline',marginTop:off>1?'28px':'0'}},h('div',null,h('div',{style:{fontSize:'18px',fontWeight:'700'}},dn(k)),h('div',{className:'mono',style:{fontSize:'12px',color:'var(--td)',marginTop:'2px'}},dD(k))),h('span',{className:'mono',style:{fontSize:'14px',color:'var(--tm)'}},it.filter(i=>!i.skip).length+' items')));if(ex)w.appendChild(h('div',{style:{marginTop:'8px',padding:'8px 12px',background:'var(--sfh)',borderRadius:'8px',border:'1px solid var(--bd)',fontSize:'14px'}},ex.emoji+' '+ex.label));const card=h('div',{className:'card',style:{marginTop:'8px'}});it.forEach(item=>{if(item.skip)return;card.appendChild(h('div',{className:'row',style:{padding:'10px 14px'}},h('span',{style:{fontSize:'14px',flex:'1'}},item.emoji+' '+item.label),(item.src==='c'||item.src==='bk')?h('button',{className:'x-btn',onclick:()=>{S.days[k].items=it.filter(x=>x!==item);svD();R()}},'×'):null))});w.appendChild(card);w.appendChild(h('button',{className:'add-d',style:{marginTop:'4px'},onclick:()=>{const l=prompt('Add to '+dn(k)+':');if(!l)return;it.push({id:'c'+Date.now(),label:l,emoji:'📌',done:false,skip:false,src:'c'});svD();R()}},'+ Add to '+dn(k)));const ids=it.map(i=>i.id);const avail=S.cfg.backlog.filter(b=>!S.bkDone[b.id]&&!ids.includes('bk-'+b.id)).sort((a,b)=>({high:0,med:1,low:2}[a.pri]||1)-({high:0,med:1,low:2}[b.pri]||1)).slice(0,3);
+if(avail.length){
+  w.appendChild(h('div',{style:{fontSize:'11px',color:'var(--td)',marginTop:'10px',marginBottom:'6px'}},'Quick-add:'));
+  const bc=h('div',{style:{display:'flex',gap:'6px',flexWrap:'wrap'}});
+  avail.forEach(b=>bc.appendChild(h('button',{
+    className:'pill',
+    onclick:()=>{
+      const targetId = 'bk-'+b.id;
+      Object.keys(S.days).forEach(dayKey => {
+        S.days[dayKey].items = (S.days[dayKey].items||[]).filter(i => i.id !== targetId);
+      });
+      it.push({id:targetId,label:b.label,emoji:b.emoji,done:false,skip:false,src:'bk',backlogId:b.id});
+      svD();
+      R();
+    }
+  },b.emoji+' '+b.label)));
+  w.appendChild(bc);
+}
+w.appendChild(h('div',{style:{fontSize:'14px',color:'var(--tm)',marginBottom:'16px'}},'Max items per day: '+(S.cfg.maxDaily||12)));
+p.appendChild(w)};
+}
 
 /* ─── BACKLOG ─── */
 function rBk(p){
@@ -374,24 +414,24 @@ function rBk(p){
 				return null;
 			}
 			const assignToDay = (dateKey) => {
-				// Remove from backlog display, but keep in backlog with due
+				// Remove this backlog item from all other days before adding
 				item.due = dateKey;
 				svC();
-				// Add to that day's items if not already present
 				ensDay(dateKey);
-				const exists = S.days[dateKey].items.some(i => i.id === 'bk-' + item.id);
-				if (!exists) {
-					S.days[dateKey].items.push({
-						id: 'bk-' + item.id,
-						label: item.label,
-						emoji: item.emoji,
-						done: false,
-						skip: false,
-						src: 'bk',
-						backlogId: item.id
-					});
-					svD();
-				}
+				const targetId = 'bk-' + item.id;
+				Object.keys(S.days).forEach(dayKey => {
+					S.days[dayKey].items = (S.days[dayKey].items||[]).filter(i => i.id !== targetId);
+				});
+				S.days[dateKey].items.push({
+					id: targetId,
+					label: item.label,
+					emoji: item.emoji,
+					done: false,
+					skip: false,
+					src: 'bk',
+					backlogId: item.id
+				});
+				svD();
 				R();
 			};
 			const row=h('div',{className:'row',style:{flexDirection:'column',alignItems:'flex-start',gap:'2px'}},
