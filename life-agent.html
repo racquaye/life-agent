@@ -96,30 +96,6 @@ function importData(){
 	}catch(e){alert('Import failed: '+e.message)}
 }
 
-// Export current app data (downloads a JSON file)
-function exportData(){
-	try{
-		const data={days:sG(K.days),bk:sG(K.bk),cfg:sG(K.cfg)};
-		const a=document.createElement('a');
-		a.href='data:application/json;charset=utf-8,'+encodeURIComponent(JSON.stringify(data));
-		a.download='life-agent-backup-'+(new Date()).toISOString().slice(0,10)+'.json';
-		document.body.appendChild(a);a.click();a.remove();
-	}catch(e){alert('Export failed: '+e.message)}
-}
-
-// Import data from pasted JSON (prompts user to paste)
-function importData(){
-	const txt=prompt('Paste JSON backup here:');
-	if(!txt) return;
-	try{
-		const d=JSON.parse(txt);
-		if(d.days) sS(K.days,d.days);
-		if(d.bk) sS(K.bk,d.bk);
-		if(d.cfg) sS(K.cfg,d.cfg);
-		alert('Import complete — reloading.');
-		location.reload();
-	}catch(e){alert('Import failed: '+e.message)}
-}
 
 /* ═══ DATES ═══ */
 function tk(){const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
