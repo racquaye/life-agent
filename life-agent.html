@@ -89,6 +89,31 @@ function importData(){
 	}catch(e){alert('Import failed: '+e.message)}
 }
 
+// Export current app data (downloads a JSON file)
+function exportData(){
+	try{
+		const data={days:sG(K.days),bk:sG(K.bk),cfg:sG(K.cfg)};
+		const a=document.createElement('a');
+		a.href='data:application/json;charset=utf-8,'+encodeURIComponent(JSON.stringify(data));
+		a.download='life-agent-backup-'+(new Date()).toISOString().slice(0,10)+'.json';
+		document.body.appendChild(a);a.click();a.remove();
+	}catch(e){alert('Export failed: '+e.message)}
+}
+
+// Import data from pasted JSON (prompts user to paste)
+function importData(){
+	const txt=prompt('Paste JSON backup here:');
+	if(!txt) return;
+	try{
+		const d=JSON.parse(txt);
+		if(d.days) sS(K.days,d.days);
+		if(d.bk) sS(K.bk,d.bk);
+		if(d.cfg) sS(K.cfg,d.cfg);
+		alert('Import complete — reloading.');
+		location.reload();
+	}catch(e){alert('Import failed: '+e.message)}
+}
+
 /* ═══ DATES ═══ */
 function tk(){const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
 function fk(n){const d=new Date();d.setDate(d.getDate()+n);return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
@@ -331,7 +356,22 @@ else if(S.edSec==='media'){const mEm=s=>s==='active'?'🟢':s==='maybe'?'⚫':s=
 else if(S.edSec==='focus'){const tags=h('div',{style:{display:'flex',flexWrap:'wrap',gap:'8px'}});S.cfg.focus.forEach((f,i)=>tags.appendChild(h('span',{style:{display:'inline-flex',alignItems:'center',gap:'6px',padding:'6px 12px',background:'var(--sfh)',borderRadius:'8px',fontSize:'12px',color:'var(--tm)',border:'1px solid var(--bd)'}},f,h('button',{onclick:()=>{S.cfg.focus.splice(i,1);svC();R()},style:{background:'none',border:'none',color:'var(--td)',cursor:'pointer',fontSize:'14px',lineHeight:'1'}},'×'))));w.appendChild(tags);w.appendChild(h('button',{className:'btn btn-g',style:{marginTop:'12px'},onclick:()=>{const t2=prompt('Focus:');if(!t2)return;S.cfg.focus.push(t2);svC();R()}},'+ Add'))}
 else if(S.edSec==='capacity'){w.appendChild(h('div',{style:{fontSize:'14px',color:'var(--tm)',marginBottom:'16px'}},'Max items per day: '+(S.cfg.maxDaily||12)));[8,10,12,15,18].forEach(n=>w.appendChild(h('button',{className:'pill'+((S.cfg.maxDaily||12)===n?' on':''),style:{marginRight:'8px',marginBottom:'8px'},onclick:()=>{S.cfg.maxDaily=n;svC();R()}},n+' items')))}
 ct.appendChild(w)}
-else{const w=h('div',{style:{padding:'20px',paddingBottom:'100px'}});w.appendChild(h('div',{style:{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'20px'}},h('div',null,h('div',{className:'mono',style:{fontSize:'10px',color:'var(--ac)',letterSpacing:'2px',textTransform:'uppercase',marginBottom:'4px'}},'Settings'),h('div',{style:{fontSize:'20px',fontWeight:'700'}},'Edit Your System')),h('button',{className:'btn btn-g',onclick:()=>{S.editing=false;regen(tk());R()}},'Done')));const menu=[['daily','☀️','Daily Habits','Routines'],['exercise','🏃🏾','Exercise','By day'],['commute','🚗','Commute','Office days'],['backlog','☰','Backlog','Tasks'],['media','▶','Media','Shows & books'],['focus','🎯','Focus','Priorities'],['capacity','⚡','Capacity','Max daily']];const c=h('div',{className:'card'});menu.forEach(([id,ic,lb,ds])=>c.appendChild(h('div',{className:'row',style:{cursor:'pointer'},onclick:()=>{S.edSec=id;R()}},h('span',{style:{fontSize:'20px',width:'32px',textAlign:'center'}},ic),h('div',{style:{flex:'1'}},h('div',{style:{fontSize:'14px',fontWeight:'500'}},lb),h('div',{style:{fontSize:'12px',color:'var(--td)',marginTop:'2px'}},ds)),h('span',{style:{color:'var(--td)',fontSize:'16px'}},'›'))));w.appendChild(c);w.appendChild(h('div',{className:'label'},'Danger Zone'));w.appendChild(h('button',{className:'btn btn-d',style:{width:'100%'},onclick:()=>{if(confirm('Reset?')){S.cfg=JSON.parse(JSON.stringify(DEF));svC();R()}}},'Reset to Defaults'));ct.appendChild(w)}
+else{
+	const w=h('div',{style:{padding:'20px',paddingBottom:'100px'}});
+	w.appendChild(h('div',{style:{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'20px'}},h('div',null,h('div',{className:'mono',style:{fontSize:'10px',color:'var(--ac)',letterSpacing:'2px',textTransform:'uppercase',marginBottom:'4px'}},'Settings'),h('div',{style:{fontSize:'20px',fontWeight:'700'}},'Edit Your System')),h('button',{className:'btn btn-g',onclick:()=>{S.editing=false;regen(tk());R()}},'Done')));
+	// Export/Import buttons
+	w.appendChild(h('div',{style:{display:'flex',gap:'8px',marginBottom:'16px'}},
+		h('button',{className:'btn btn-g',style:{flex:1},onclick:()=>{exportData()}},'Export Data'),
+		h('button',{className:'btn',style:{flex:1},onclick:()=>{importData()}},'Import Data')
+	));
+	const menu=[['daily','☀️','Daily Habits','Routines'],['exercise','🏃🏾','Exercise','By day'],['commute','🚗','Commute','Office days'],['backlog','☰','Backlog','Tasks'],['media','▶','Media','Shows & books'],['focus','🎯','Focus','Priorities'],['capacity','⚡','Capacity','Max daily']];
+	const c=h('div',{className:'card'});
+	menu.forEach(([id,ic,lb,ds])=>c.appendChild(h('div',{className:'row',style:{cursor:'pointer'},onclick:()=>{S.edSec=id;R()}},h('span',{style:{fontSize:'20px',width:'32px',textAlign:'center'}},ic),h('div',{style:{flex:'1'}},h('div',{style:{fontSize:'14px',fontWeight:'500'}},lb),h('div',{style:{fontSize:'12px',color:'var(--td)',marginTop:'2px'}},ds)),h('span',{style:{color:'var(--td)',fontSize:'16px'}},'›'))));
+	w.appendChild(c);
+	w.appendChild(h('div',{className:'label'},'Danger Zone'));
+	w.appendChild(h('button',{className:'btn btn-d',style:{width:'100%'},onclick:()=>{if(confirm('Reset?')){S.cfg=JSON.parse(JSON.stringify(DEF));svC();R()}}},'Reset to Defaults'));
+	ct.appendChild(w);
+}
 app.appendChild(ct);app.appendChild(h('div',{style:{borderTop:'1px solid var(--bd)',background:'var(--sf)',position:'sticky',bottom:'0'}},h('button',{onclick:()=>{S.editing=false;S.edSec=null;regen(tk());R()},style:{width:'100%',padding:'14px',background:'none',border:'none',color:'var(--ac)',cursor:'pointer',fontSize:'12px',fontFamily:"'IBM Plex Mono',monospace",letterSpacing:'1px'}},'← BACK TO APP')));
 }
 
