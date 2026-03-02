@@ -177,18 +177,23 @@ function getSug(dk){const it=S.days[dk]?.items||[];const ac=it.filter(i=>!i.skip
 
 /* ═══ STREAKS ═══ */
 function getStreaks(){
-const tracked=[{id:'pray',label:'Prayer',emoji:'🙏🏾'},{id:'ex',label:'Exercise',emoji:'🏃🏾'},{id:'meditate',label:'Meditation',emoji:'🧘🏾'},{id:'journal',label:'Journal',emoji:'📓'},{id:'diet',label:'Healthy Diet',emoji:'🥗'}];
-const allDays=Object.keys(S.days).sort().reverse();
-return tracked.map(t=>{
-let streak=0;
-for(const dk of allDays){
-const items=S.days[dk]?.items||[];
-const found=items.some(i=>(i.id===t.id||i.label?.toLowerCase().includes(t.label.toLowerCase().split(' ')[0]))&&i.done);
-if(found)streak++;else break;
-}
-const total=allDays.filter(dk=>(S.days[dk]?.items||[]).some(i=>(i.id===t.id||i.label?.toLowerCase().includes(t.label.toLowerCase().split(' ')[0]))&&i.done)).length;
-return{...t,streak,total,outOf:allDays.length};
-});
+	const tracked=[{id:'pray',label:'Prayer',emoji:'🙏🏾'},{id:'ex',label:'Exercise',emoji:'🏃🏾'},{id:'meditate',label:'Meditation',emoji:'🧘🏾'},{id:'journal',label:'Journal',emoji:'📓'},{id:'diet',label:'Healthy Diet',emoji:'🥗'}];
+	const allDays=Object.keys(S.days).sort().reverse();
+	// For each tracked habit, calculate all-time streak, total, and monthly total
+	const now=new Date();
+	const thisMonth=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0');
+	return tracked.map(t=>{
+		let streak=0;
+		for(const dk of allDays){
+			const items=S.days[dk]?.items||[];
+			const found=items.some(i=>(i.id===t.id||i.label?.toLowerCase().includes(t.label.toLowerCase().split(' ')[0]))&&i.done);
+			if(found)streak++;else break;
+		}
+		const total=allDays.filter(dk=>(S.days[dk]?.items||[]).some(i=>(i.id===t.id||i.label?.toLowerCase().includes(t.label.toLowerCase().split(' ')[0]))&&i.done)).length;
+		const monthTotal=allDays.filter(dk=>dk.startsWith(thisMonth)&&(S.days[dk]?.items||[]).some(i=>(i.id===t.id||i.label?.toLowerCase().includes(t.label.toLowerCase().split(' ')[0]))&&i.done)).length;
+		const monthOutOf=allDays.filter(dk=>dk.startsWith(thisMonth)).length;
+		return{...t,streak,total,outOf:allDays.length,monthTotal,monthOutOf};
+	});
 }
 
 /* ═══ INSIGHTS ═══ */
@@ -417,8 +422,19 @@ function rIns(p){
 const w=h('div',{style:{padding:'20px'}});
 // Streaks
 w.appendChild(h('div',{className:'label'},'Current Streaks'));
-const streaks=getStreaks();const sc=h('div',{className:'card'});
-streaks.forEach(s=>{sc.appendChild(h('div',{className:'streak-card'},h('div',{className:'streak-num',style:{color:s.streak>=5?'var(--gn)':s.streak>=2?'var(--ac)':'var(--tm)'}},s.streak),h('div',{style:{flex:'1'}},h('div',{style:{fontSize:'14px',fontWeight:'500'}},s.emoji+' '+s.label),h('div',{style:{fontSize:'11px',color:'var(--td)',marginTop:'4px'}},s.total+'/'+s.outOf+' days total'),h('div',{className:'streak-bar',style:{marginTop:'6px'}},h('div',{className:'streak-fill',style:{width:Math.round(s.total/Math.max(s.outOf,1)*100)+'%',background:s.total/Math.max(s.outOf,1)>=.7?'var(--gn)':'var(--ac)'}})))))});
+const streaks=getStreaks();
+const sc=h('div',{className:'card'});
+streaks.forEach(s=>{
+	sc.appendChild(h('div',{className:'streak-card'},
+		h('div',{className:'streak-num',style:{color:s.streak>=5?'var(--gn)':s.streak>=2?'var(--ac)':'var(--tm)'}},s.streak),
+		h('div',{style:{flex:'1'}},
+			h('div',{style:{fontSize:'14px',fontWeight:'500'}},s.emoji+' '+s.label),
+			h('div',{style:{fontSize:'11px',color:'var(--td)',marginTop:'4px'}},s.total+'/'+s.outOf+' days total'),
+			h('div',{style:{fontSize:'11px',color:'var(--ac)',marginTop:'2px'}},'This month: '+s.monthTotal+'/'+s.monthOutOf)
+		),
+		h('div',{className:'streak-bar',style:{marginTop:'6px'}},h('div',{className:'streak-fill',style:{width:Math.round(s.total/Math.max(s.outOf,1)*100)+'%',background:s.total/Math.max(s.outOf,1)>=.7?'var(--gn)':'var(--ac)'}}))
+	));
+});
 w.appendChild(sc);
 // Insights
 w.appendChild(h('div',{className:'label'},'Weekly Insights'));
