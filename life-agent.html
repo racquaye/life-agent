@@ -259,7 +259,7 @@ const w=h('div',{style:{padding:'16px 0'}}),items=S.days[td].items,ex=S.cfg.exer
 if(ex)w.appendChild(h('div',{className:'tbox'},h('div',{className:'mono',style:{fontSize:'10px',color:'var(--ac)',letterSpacing:'1.5px',textTransform:'uppercase',marginBottom:'6px'}},"Today's Training"),h('div',{style:{fontSize:'16px',fontWeight:'600'}},ex.emoji+' '+ex.label)));
 const ins=getIns();if(ins.length){const iw=h('div',{style:{margin:'0 20px 16px'}});ins.slice(0,2).forEach(n=>iw.appendChild(h('div',{className:'insight insight-'+n.t},n.x)));w.appendChild(iw)}
 // Checklist
-wconst card=h('div',{className:'card',style:{margin:'0 16px'}});
+const card=h('div',{className:'card',style:{margin:'0 16px'}});
 items.forEach((item,idx)=>{
 	if(item.skip){card.appendChild(h('div',{className:'row skipped','data-idx':idx,style:{padding:'8px 14px'}},h('span',{style:{fontSize:'13px',flex:'1'}},item.emoji+' '+item.label),h('button',{className:'skip-btn',onclick:()=>{item.skip=false;svD();R()}},'restore')));return}
 	card.appendChild(h('div',{className:'row','data-idx':idx,style:{opacity:item.done?'.5':'1'}},
