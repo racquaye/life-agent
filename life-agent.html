@@ -259,10 +259,27 @@ const w=h('div',{style:{padding:'16px 0'}}),items=S.days[td].items,ex=S.cfg.exer
 if(ex)w.appendChild(h('div',{className:'tbox'},h('div',{className:'mono',style:{fontSize:'10px',color:'var(--ac)',letterSpacing:'1.5px',textTransform:'uppercase',marginBottom:'6px'}},"Today's Training"),h('div',{style:{fontSize:'16px',fontWeight:'600'}},ex.emoji+' '+ex.label)));
 const ins=getIns();if(ins.length){const iw=h('div',{style:{margin:'0 20px 16px'}});ins.slice(0,2).forEach(n=>iw.appendChild(h('div',{className:'insight insight-'+n.t},n.x)));w.appendChild(iw)}
 // Checklist
-const card=h('div',{className:'card',style:{margin:'0 16px'}});
+wconst card=h('div',{className:'card',style:{margin:'0 16px'}});
 items.forEach((item,idx)=>{
-if(item.skip){card.appendChild(h('div',{className:'row skipped','data-idx':idx,style:{padding:'8px 14px'}},h('span',{style:{fontSize:'13px',flex:'1'}},item.emoji+' '+item.label),h('button',{className:'skip-btn',onclick:()=>{item.skip=false;svD();R()}},'restore')));return}
-card.appendChild(h('div',{className:'row','data-idx':idx,style:{opacity:item.done?'.5':'1'}},h('span',{className:'grip'},'⠿'),h('button',{className:'check'+(item.done?' done':''),onclick:()=>{item.done=!item.done;svD();R()}},item.done?'✓':''),h('span',{style:{flex:'1',fontSize:'15px',textDecoration:item.done?'line-through':'none',color:item.done?'var(--tm)':'var(--tx)'}},item.emoji+' '+item.label),h('button',{className:'more-btn',onclick:e=>{e.stopPropagation();showMenu(item,td)}},'⋯')));
+	if(item.skip){card.appendChild(h('div',{className:'row skipped','data-idx':idx,style:{padding:'8px 14px'}},h('span',{style:{fontSize:'13px',flex:'1'}},item.emoji+' '+item.label),h('button',{className:'skip-btn',onclick:()=>{item.skip=false;svD();R()}},'restore')));return}
+	card.appendChild(h('div',{className:'row','data-idx':idx,style:{opacity:item.done?'.5':'1'}},
+		h('span',{className:'grip'},'⠿'),
+		h('button',{
+			className:'check'+(item.done?' done':''),
+			onclick:()=>{
+				item.done=!item.done;
+				// If this is a scheduled backlog item, mark as done in backlog too
+				if(item.src==='bk' && item.backlogId){
+					S.bkDone = S.bkDone || {};
+					S.bkDone[item.backlogId]=item.done;
+					svB();
+				}
+				svD();R();
+			}
+		},item.done?'✓':''),
+		h('span',{style:{flex:'1',fontSize:'15px',textDecoration:item.done?'line-through':'none',color:item.done?'var(--tm)':'var(--tx)'}},item.emoji+' '+item.label),
+		h('button',{className:'more-btn',onclick:e=>{e.stopPropagation();showMenu(item,td)}},'⋯')
+	));
 });
 w.appendChild(card);setTimeout(()=>setupDrag(card,td),0);
 // Add
@@ -316,6 +333,57 @@ function rBk(p){
 		w.appendChild(h('div',{className:'label'},(pri==='med'?'medium':pri)+' priority'));
 		const c=h('div',{className:'card'});
 		it.forEach(item=>{
+			// Lightweight natural language date parser
+			function parseDateInput(input) {
+				if(!input) return null;
+				input = input.trim().toLowerCase();
+				const today = new Date();
+				// Try YYYY-MM-DD
+				if(/^\d{4}-\d{2}-\d{2}$/.test(input)) return input;
+				// Try MM/DD or MM-DD
+				let m = input.match(/^(\d{1,2})[\/\-](\d{1,2})$/);
+				if(m) {
+					const y = today.getFullYear();
+					return y+'-'+String(m[1]).padStart(2,'0')+'-'+String(m[2]).padStart(2,'0');
+				}
+				// Try 'march 4', 'mar 4th', etc.
+				m = input.match(/^(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\s*(\d{1,2})/);
+				if(m) {
+					const months = {jan:1,feb:2,mar:3,apr:4,may:5,jun:6,jul:7,aug:8,sep:9,oct:10,nov:11,dec:12};
+					const y = today.getFullYear();
+					return y+'-'+String(months[m[1]]).padStart(2,'0')+'-'+String(m[2]).padStart(2,'0');
+				}
+				// Try 'this wednesday', 'next friday', etc.
+				m = input.match(/^(this|next)?\s*(sunday|monday|tuesday|wednesday|thursday|friday|saturday)/);
+				if(m) {
+					const days = ['sunday','monday','tuesday','wednesday','thursday','friday','saturday'];
+					let target = days.indexOf(m[2]);
+					let now = today.getDay();
+					let add = (target-now+7)%7;
+					if(add===0 && m[1]==='next') add=7;
+					if(add!==0 && m[1]==='next') add+=7;
+					if(m[1]==='this' && add!==0){} // this X means this week, so add stays
+					else if(m[1]==='this' && add===0){} // today
+					else if(!m[1] && add===0){} // today
+					else if(!m[1]){} // next occurrence
+					const d2 = new Date(today.getTime()+add*86400000);
+					return d2.getFullYear()+'-'+String(d2.getMonth()+1).padStart(2,'0')+'-'+String(d2.getDate()).padStart(2,'0');
+				}
+				// Try 'in 3 days', 'in 2 weeks'
+				m = input.match(/^in\s*(\d+)\s*(day|days|week|weeks)$/);
+				if(m) {
+					let add = parseInt(m[1],10);
+					if(m[2].startsWith('week')) add*=7;
+					const d2 = new Date(today.getTime()+add*86400000);
+					return d2.getFullYear()+'-'+String(d2.getMonth()+1).padStart(2,'0')+'-'+String(d2.getDate()).padStart(2,'0');
+				}
+				// Fallback: try Date.parse
+				const d = new Date(input);
+				if(!isNaN(d.getTime())) {
+					return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+				}
+				return null;
+			}
 			const assignToDay = (dateKey) => {
 				// Remove from backlog display, but keep in backlog with due
 				item.due = dateKey;
@@ -358,9 +426,11 @@ function rBk(p){
 						className:'pill',onclick:()=>assignToDay(fk(1))},'Tomorrow'),
 					h('button',{
 						className:'pill',onclick:()=>{
-							const d=prompt('Schedule for date (YYYY-MM-DD):',item.due||'');
+							const d=prompt('Schedule for date (YYYY-MM-DD or natural language):',item.due||'');
 							if(!d)return;
-							assignToDay(d);
+							const parsed=parseDateInput(d);
+							if(!parsed){alert('Could not parse date. Try YYYY-MM-DD, "March 4th", "next Friday", or "in 3 days".');return;}
+							assignToDay(parsed);
 						}},'Schedule'),
 					item.due?h('span',{className:'mono',style:{fontSize:'11px',color:item.due<=td?'var(--rd)':'var(--td)',marginLeft:'8px'}},dS(item.due)):null
 				)
