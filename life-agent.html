@@ -181,12 +181,19 @@ function getStreaks(){
 	const allDays=Object.keys(S.days).sort(); // ascending
 	const now=new Date();
 	const todayKey = now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0')+'-'+String(now.getDate()).padStart(2,'0');
-	// Only count days up to and including today
-	const occurredDays = allDays.filter(dk => dk <= todayKey);
-	// For this month, count only days in the month up to today
+	const streakStart = '2026-03-01';
+	// Only count days from streakStart up to and including today
+	const occurredDays = allDays.filter(dk => dk >= streakStart && dk <= todayKey);
+	// For this month, count only days in the month up to today, but not before streakStart
 	const thisMonth=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0');
 	const daysInMonth = new Date(now.getFullYear(), now.getMonth()+1, 0).getDate();
 	const todayNum = now.getDate();
+	const monthStart = thisMonth+'-01';
+	const monthDays = [];
+	for(let d=1;d<=todayNum;d++){
+		const dayKey = thisMonth+'-'+String(d).padStart(2,'0');
+		if(dayKey >= streakStart) monthDays.push(dayKey);
+	}
 	return tracked.map(t=>{
 		let streak=0;
 		for(let i=occurredDays.length-1;i>=0;i--){
@@ -197,12 +204,8 @@ function getStreaks(){
 		}
 		const total=occurredDays.filter(dk=>(S.days[dk]?.items||[]).some(i=>(i.id===t.id||i.label?.toLowerCase().includes(t.label.toLowerCase().split(' ')[0]))&&i.done)).length;
 		// For this month, count only days in the month up to today
-		const monthDays = [];
-		for(let d=1;d<=todayNum;d++){
-			monthDays.push(thisMonth+'-'+String(d).padStart(2,'0'));
-		}
 		const monthTotal=monthDays.filter(dk=>(S.days[dk]?.items||[]).some(i=>(i.id===t.id||i.label?.toLowerCase().includes(t.label.toLowerCase().split(' ')[0]))&&i.done)).length;
-		return{...t,streak,total,outOf:occurredDays.length,monthTotal,monthOutOf:todayNum};
+		return{...t,streak,total,outOf:occurredDays.length,monthTotal,monthOutOf:monthDays.length};
 	});
 }
 
