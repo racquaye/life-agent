@@ -311,31 +311,79 @@ if(sugs.length){
   },b.emoji+' '+b.label)));
   w.appendChild(sc);
 }
-w.appendChild(h('div',{style:{margin:'24px 20px 0'}},h('div',{className:'label',style:{margin:'0 0 10px'}},'March Focus'),h('div',{style:{display:'flex',flexWrap:'wrap',gap:'6px'}},...S.cfg.focus.map(f=>h('span',{className:'tag'},f)))));
+w.appendChild(
+	h(
+		'div',
+		{style:{margin:'24px 20px 0'}},
+		h('div',{className:'label',style:{margin:'0 0 10px'}},'March Focus'),
+		h(
+			'div',
+			{style:{display:'flex',flexWrap:'wrap',gap:'6px'}},
+			...S.cfg.focus.map(f=>h('span',{className:'tag'},f))
+		)
+	)
+);
 p.appendChild(w);
 }
 
 /* ─── UPCOMING ─── */
-function rUp(p){const w=h('div',{style:{padding:'20px'}});[1,2].forEach(off=>{const k=fk(off);ensDay(k);const it=S.days[k].items,ex=S.cfg.exercise[dow(k)];w.appendChild(h('div',{style:{display:'flex',justifyContent:'space-between',alignItems:'baseline',marginTop:off>1?'28px':'0'}},h('div',null,h('div',{style:{fontSize:'18px',fontWeight:'700'}},dn(k)),h('div',{className:'mono',style:{fontSize:'12px',color:'var(--td)',marginTop:'2px'}},dD(k))),h('span',{className:'mono',style:{fontSize:'14px',color:'var(--tm)'}},it.filter(i=>!i.skip).length+' items')));if(ex)w.appendChild(h('div',{style:{marginTop:'8px',padding:'8px 12px',background:'var(--sfh)',borderRadius:'8px',border:'1px solid var(--bd)',fontSize:'14px'}},ex.emoji+' '+ex.label));const card=h('div',{className:'card',style:{marginTop:'8px'}});it.forEach(item=>{if(item.skip)return;card.appendChild(h('div',{className:'row',style:{padding:'10px 14px'}},h('span',{style:{fontSize:'14px',flex:'1'}},item.emoji+' '+item.label),(item.src==='c'||item.src==='bk')?h('button',{className:'x-btn',onclick:()=>{S.days[k].items=it.filter(x=>x!==item);svD();R()}},'×'):null))});w.appendChild(card);w.appendChild(h('button',{className:'add-d',style:{marginTop:'4px'},onclick:()=>{const l=prompt('Add to '+dn(k)+':');if(!l)return;it.push({id:'c'+Date.now(),label:l,emoji:'📌',done:false,skip:false,src:'c'});svD();R()}},'+ Add to '+dn(k)));const ids=it.map(i=>i.id);const avail=S.cfg.backlog.filter(b=>!S.bkDone[b.id]&&!ids.includes('bk-'+b.id)).sort((a,b)=>({high:0,med:1,low:2}[a.pri]||1)-({high:0,med:1,low:2}[b.pri]||1)).slice(0,3);
-if(avail.length){
-  w.appendChild(h('div',{style:{fontSize:'11px',color:'var(--td)',marginTop:'10px',marginBottom:'6px'}},'Quick-add:'));
-  const bc=h('div',{style:{display:'flex',gap:'6px',flexWrap:'wrap'}});
-  avail.forEach(b=>bc.appendChild(h('button',{
-    className:'pill',
-    onclick:()=>{
-      const targetId = 'bk-'+b.id;
-      Object.keys(S.days).forEach(dayKey => {
-        S.days[dayKey].items = (S.days[dayKey].items||[]).filter(i => i.id !== targetId);
-      });
-      it.push({id:targetId,label:b.label,emoji:b.emoji,done:false,skip:false,src:'bk',backlogId:b.id});
-      svD();
-      R();
-    }
-  },b.emoji+' '+b.label)));
-  w.appendChild(bc);
-}
-w.appendChild(h('div',{style:{fontSize:'14px',color:'var(--tm)',marginBottom:'16px'}},'Max items per day: '+(S.cfg.maxDaily||12)));
-p.appendChild(w)};
+function rUp(p){
+	const w=h('div',{style:{padding:'20px'}});
+	[1,2].forEach(off=>{
+		const k=fk(off);
+		ensDay(k);
+		const dayItems=S.days[k].items;
+		const ex=S.cfg.exercise[dow(k)];
+		const header=h(
+			'div',
+			{style:{display:'flex',justifyContent:'space-between',alignItems:'baseline',marginTop:off>1?'28px':'0'}},
+			h(
+				'div',
+				null,
+				h('div',{style:{fontSize:'18px',fontWeight:'700'}},dn(k)),
+				h('div',{className:'mono',style:{fontSize:'12px',color:'var(--td)',marginTop:'2px'}},dD(k))
+			),
+			h('span',{className:'mono',style:{fontSize:'14px',color:'var(--tm)'}},dayItems.filter(i=>!i.skip).length+' items')
+		);
+		w.appendChild(header);
+		if(ex){
+			w.appendChild(h('div',{style:{marginTop:'8px',padding:'8px 12px',background:'var(--sfh)',borderRadius:'8px',border:'1px solid var(--bd)',fontSize:'14px'}},ex.emoji+' '+ex.label));
+		}
+		const card=h('div',{className:'card',style:{marginTop:'8px'}});
+		dayItems.forEach(item=>{
+			if(item.skip)return;
+			const children=[h('span',{style:{fontSize:'14px',flex:'1'}},item.emoji+' '+item.label)];
+			if(item.src==='c'||item.src==='bk'){
+				children.push(h('button',{className:'x-btn',onclick:()=>{S.days[k].items=dayItems.filter(x=>x!==item);svD();R()}},'×'));
+			}
+			card.appendChild(h('div',{className:'row',style:{padding:'10px 14px'}},...children));
+		});
+		w.appendChild(card);
+		w.appendChild(h('button',{className:'add-d',style:{marginTop:'4px'},onclick:()=>{const l=prompt('Add to '+dn(k)+':');if(!l)return;dayItems.push({id:'c'+Date.now(),label:l,emoji:'📌',done:false,skip:false,src:'c'});svD();R()}},'+ Add to '+dn(k)));
+		const ids=dayItems.map(i=>i.id);
+		const avail=S.cfg.backlog.filter(b=>!S.bkDone[b.id]&&!ids.includes('bk-'+b.id)).sort((a,b)=>({high:0,med:1,low:2}[a.pri]||1)-({high:0,med:1,low:2}[b.pri]||1)).slice(0,3);
+		if(avail.length){
+			w.appendChild(h('div',{style:{fontSize:'11px',color:'var(--td)',marginTop:'10px',marginBottom:'6px'}},'Quick-add:'));
+			const bc=h('div',{style:{display:'flex',gap:'6px',flexWrap:'wrap'}});
+			avail.forEach(b=>{
+				bc.appendChild(h('button',{
+					className:'pill',
+					onclick:()=>{
+						const targetId='bk-'+b.id;
+						Object.keys(S.days).forEach(dayKey=>{
+							S.days[dayKey].items=(S.days[dayKey].items||[]).filter(i=>i.id!==targetId);
+						});
+						dayItems.push({id:targetId,label:b.label,emoji:b.emoji,done:false,skip:false,src:'bk',backlogId:b.id});
+						svD();
+						R();
+					}
+				},b.emoji+' '+b.label));
+			});
+			w.appendChild(bc);
+		}
+	});
+	w.appendChild(h('div',{style:{fontSize:'14px',color:'var(--tm)',marginBottom:'16px'}},'Max items per day: '+(S.cfg.maxDaily||12)));
+	p.appendChild(w);
 }
 
 /* ─── BACKLOG ─── */
