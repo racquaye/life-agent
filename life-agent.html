@@ -62,6 +62,7 @@ body{background:var(--bg);color:var(--tx);font-family:'Outfit',sans-serif;max-wi
 	<h3>Ask Claude</h3>
 	<textarea id="claudePrompt" rows="3" style="width:100%"></textarea><br>
 	<button onclick="askClaude()">Send to Claude</button>
+	<button onclick="summarizeMyWeek()" style="margin-left:10px;">Summarize My Week</button>
 	<div id="claudeReply" style="margin-top:1em;white-space:pre-wrap;"></div>
 </div>
 <script>
@@ -589,5 +590,32 @@ async function askClaude() {
 	}
 }
 </script>
+// Summarize My Week: gathers last 7 days' activity and sends to Claude
+async function summarizeMyWeek() {
+	const now = new Date();
+	const days = [];
+	for (let i = 6; i >= 0; i--) {
+		const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() - i);
+		const key = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+		if (S.days && S.days[key]) {
+			days.push({
+				date: key,
+				items: (S.days[key].items || []).map(it => ({ label: it.label, done: !!it.done, skipped: !!it.skipped }))
+			});
+		}
+	}
+	let prompt = 'Here is my activity for the past week:';
+	days.forEach(day => {
+		prompt += '\n' + day.date + ': ';
+		if (day.items.length === 0) {
+			prompt += 'No entries.';
+		} else {
+			prompt += day.items.map(it => `${it.label}${it.done ? ' (done)' : it.skipped ? ' (skipped)' : ''}`).join(', ');
+		}
+	});
+	prompt += '\nPlease summarize my week, highlight achievements, missed goals, and suggest improvements.';
+	document.getElementById('claudePrompt').value = prompt;
+	askClaude();
+}
 </body>
 </html>
