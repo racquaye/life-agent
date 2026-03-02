@@ -510,7 +510,15 @@ w.appendChild(h('div',{className:'label'},'Weekly Insights'));
 const ins=getIns();if(ins.length)ins.forEach(n=>w.appendChild(h('div',{className:'insight insight-'+n.t},n.x)));else w.appendChild(h('div',{style:{color:'var(--tm)',fontSize:'14px'}},'Log a few days to see insights.'));
 // Media
 const mEm=s=>s==='active'?'🟢':s==='maybe'?'⚫':s==='paused'?'🟡':s==='queued'?'📚':s==='done'?'✅':'📌';
-['watch','read'].forEach(type=>{w.appendChild(h('div',{className:'label'},type==='watch'?'Watching':'Reading'));const c=h('div',{className:'card'});S.cfg.media[type].forEach(i=>c.appendChild(h('div',{className:'row'},h('span',{style:{fontSize:'10px'}},mEm(i.s)),h('span',{style:{flex:'1',fontSize:'14px'}},i.t),h('span',{className:'mono',style:{fontSize:'10px',color:i.s==='active'?'var(--gn)':'var(--td)',textTransform:'uppercase'}},i.s))));w.appendChild(c)});
+['watch','read'].forEach(type=>{w.appendChild(h('div',{className:'label'},type==='watch'?'Watching':'Reading'));const c=h('div',{className:'card'});S.cfg.media[type].forEach(i => 
+  c.appendChild(
+    h('div', {className:'row'},
+      h('span', {style:{fontSize:'10px'}}, mEm(i.s)),
+      h('span', {style:{flex:'1',fontSize:'14px'}}, i.t),
+      h('span', {className:'mono',style:{fontSize:'10px',color:i.s==='active'?'var(--gn)':'var(--td)',textTransform:'uppercase'}}, i.s)
+    )
+  )
+);w.appendChild(c);w.appendChild(h('button',{className:'btn btn-g',style:{width:'100%',marginTop:'8px'},onclick:()=>{const t2=prompt(type==='watch'?'Show:':'Book:');if(!t2)return;S.cfg.media[type].push({t:t2,s:'active'});svC();R()}},'+ Add')))}
 // Exercise
 w.appendChild(h('div',{className:'label'},'Exercise Schedule'));
 const ec=h('div',{className:'card'});
