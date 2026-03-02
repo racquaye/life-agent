@@ -58,6 +58,12 @@ body{background:var(--bg);color:var(--tx);font-family:'Outfit',sans-serif;max-wi
 </head>
 <body>
 <div id="app"></div>
+<div id="claude-section" style="margin:2em 0;">
+	<h3>Ask Claude</h3>
+	<textarea id="claudePrompt" rows="3" style="width:100%"></textarea><br>
+	<button onclick="askClaude()">Send to Claude</button>
+	<div id="claudeReply" style="margin-top:1em;white-space:pre-wrap;"></div>
+</div>
 <script>
 /* ═══ STORAGE ═══ */
 const K={days:'la7d',bk:'la7b',cfg:'la7c',init:'la7init'};
@@ -565,6 +571,23 @@ app.appendChild(ct);app.appendChild(h('div',{style:{borderTop:'1px solid var(--b
 }
 
 R();
+
+// Claude integration
+async function askClaude() {
+	const prompt = document.getElementById('claudePrompt').value;
+	document.getElementById('claudeReply').textContent = 'Thinking...';
+	try {
+		const res = await fetch('http://localhost:3000/api/claude', {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({ prompt })
+		});
+		const data = await res.json();
+		document.getElementById('claudeReply').textContent = data.reply || (data.error && JSON.stringify(data.error)) || 'No reply';
+	} catch (e) {
+		document.getElementById('claudeReply').textContent = 'Error: ' + e.message;
+	}
+}
 </script>
 </body>
 </html>
