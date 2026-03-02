@@ -601,21 +601,5 @@ async function summarizeMyWeek() {
 			days.push({
 				date: key,
 				items: (S.days[key].items || []).map(it => ({ label: it.label, done: !!it.done, skipped: !!it.skipped }))
-			});
+			</script>
 		}
-	}
-	let prompt = 'Here is my activity for the past week:';
-	days.forEach(day => {
-		prompt += '\n' + day.date + ': ';
-		if (day.items.length === 0) {
-			prompt += 'No entries.';
-		} else {
-			prompt += day.items.map(it => `${it.label}${it.done ? ' (done)' : it.skipped ? ' (skipped)' : ''}`).join(', ');
-		}
-	});
-	prompt += '\nPlease summarize my week, highlight achievements, missed goals, and suggest improvements.';
-	document.getElementById('claudePrompt').value = prompt;
-	askClaude();
-}
-</body>
-</html>
