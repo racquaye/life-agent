@@ -178,21 +178,31 @@ function getSug(dk){const it=S.days[dk]?.items||[];const ac=it.filter(i=>!i.skip
 /* ═══ STREAKS ═══ */
 function getStreaks(){
 	const tracked=[{id:'pray',label:'Prayer',emoji:'🙏🏾'},{id:'ex',label:'Exercise',emoji:'🏃🏾'},{id:'meditate',label:'Meditation',emoji:'🧘🏾'},{id:'journal',label:'Journal',emoji:'📓'},{id:'diet',label:'Healthy Diet',emoji:'🥗'}];
-	const allDays=Object.keys(S.days).sort().reverse();
-	// For each tracked habit, calculate all-time streak, total, and monthly total
+	const allDays=Object.keys(S.days).sort(); // ascending
 	const now=new Date();
+	const todayKey = now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0')+'-'+String(now.getDate()).padStart(2,'0');
+	// Only count days from today forward
+	const futureDays = allDays.filter(dk => dk >= todayKey);
+	// For this month, count all days in the month
 	const thisMonth=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0');
+	// Get number of days in this month
+	const daysInMonth = new Date(now.getFullYear(), now.getMonth()+1, 0).getDate();
 	return tracked.map(t=>{
 		let streak=0;
-		for(const dk of allDays){
+		for(let i=futureDays.length-1;i>=0;i--){
+			const dk = futureDays[i];
 			const items=S.days[dk]?.items||[];
 			const found=items.some(i=>(i.id===t.id||i.label?.toLowerCase().includes(t.label.toLowerCase().split(' ')[0]))&&i.done);
 			if(found)streak++;else break;
 		}
-		const total=allDays.filter(dk=>(S.days[dk]?.items||[]).some(i=>(i.id===t.id||i.label?.toLowerCase().includes(t.label.toLowerCase().split(' ')[0]))&&i.done)).length;
-		const monthTotal=allDays.filter(dk=>dk.startsWith(thisMonth)&&(S.days[dk]?.items||[]).some(i=>(i.id===t.id||i.label?.toLowerCase().includes(t.label.toLowerCase().split(' ')[0]))&&i.done)).length;
-		const monthOutOf=allDays.filter(dk=>dk.startsWith(thisMonth)).length;
-		return{...t,streak,total,outOf:allDays.length,monthTotal,monthOutOf};
+		const total=futureDays.filter(dk=>(S.days[dk]?.items||[]).some(i=>(i.id===t.id||i.label?.toLowerCase().includes(t.label.toLowerCase().split(' ')[0]))&&i.done)).length;
+		// For this month, count all days in the month
+		const monthDays = [];
+		for(let d=1;d<=daysInMonth;d++){
+			monthDays.push(thisMonth+'-'+String(d).padStart(2,'0'));
+		}
+		const monthTotal=monthDays.filter(dk=>(S.days[dk]?.items||[]).some(i=>(i.id===t.id||i.label?.toLowerCase().includes(t.label.toLowerCase().split(' ')[0]))&&i.done)).length;
+		return{...t,streak,total,outOf:futureDays.length,monthTotal,monthOutOf:daysInMonth};
 	});
 }
 
